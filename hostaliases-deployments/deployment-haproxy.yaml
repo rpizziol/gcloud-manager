@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: haproxy-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: acmeair
+      tier: haproxy
+  template:
+    metadata:
+      annotations:
+        vpa.k8s.io/in-place-update-policy: "true"
+      labels:
+        app: acmeair
+        tier: haproxy
+    spec:
+      hostAliases:
+        - ip: "34.118.230.53"
+          hostnames:
+          - "mongohost"
+        - ip: "34.118.226.47"
+          hostnames:
+          - "auth"
+        - ip: "34.118.232.255"
+          hostnames:
+          - "bookingbookflights"
+        - ip: "34.118.226.35"
+          hostnames:
+          - "bookingcancelbooking"
+        - ip: "34.118.229.214"
+          hostnames:
+          - "customerbyidget"
+        - ip: "34.118.235.70"
+          hostnames:
+          - "customerbyidpost"
+        - ip: "34.118.231.36"
+          hostnames:
+          - "customerupdatemiles"
+        - ip: "34.118.227.35"
+          hostnames:
+          - "customervalidateid"
+        - ip: "34.118.231.10"
+          hostnames:
+          - "flightgetrewardmiles"
+        - ip: "34.118.232.169"
+          hostnames:
+          - "flightqueryflights"
+      dnsPolicy: Default # ClusterFirst
+      containers:
+        - name: haproxy-container
+          image: rpizziol/acmeair-proxy:0.25
+          imagePullPolicy: Always
+          resizePolicy:
+            - resourceName: cpu
+              restartPolicy: NotRequired
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "1000m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          ports:
+            - containerPort: 8080
